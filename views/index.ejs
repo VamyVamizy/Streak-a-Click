@@ -11,6 +11,13 @@
   <header class="site-header">
     <nav aria-label="Main navigation">
       <a class="brand" href="/">Click-a-Streak 🔥</a>
+      <% if (isAuthenticated) { %>
+        <span>Signed in as <%= username %></span>
+        <a href="/logout">Log out</a>
+      <% } else { %>
+        <a href="/login">Log in</a>
+        <a href="/register">Create account</a>
+      <% } %>
     </nav>
   </header>
 
@@ -32,8 +39,8 @@
       </div>
       <div class="btns_row">
         <div class="upgradeCont">
-          <form action="/upgrade" method="POST">
-            <button class="up" type="submit" id="streakUp">+1 Streak</button>
+          <form>
+            <button class="up" type="button" id="streakUp">+1 Streak</button>
           </form>
         </div>
         <div class="overclock">
@@ -88,5 +95,9 @@
   </footer>
 
   <script src="/js/index.js" defer></script>
+  <script>
+    window.isAuthenticated = <%= isAuthenticated ? 'true' : 'false' %>;
+    window.initialProgress = <%- JSON.stringify(initialProgress) %>;
+  </script>
 </body>
 </html>

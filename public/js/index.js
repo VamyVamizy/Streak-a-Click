@@ -1,11 +1,15 @@
+const savedProgress = window.initialProgress || {};
+const isAuthenticated = Boolean(window.isAuthenticated);
+
 // variables
-let clicks = 0;
-let streak = 1;
+let clicks = Number(savedProgress.clicks) || 0;
+let streak = Number(savedProgress.streak) || 1;
+let streakLevel = Number(savedProgress.streakLevel) || 1;
 let drainable = true;
-let decreaseValue = 50;
-let force = 8;
-let overclocked = false;
-let criticalChance = 0.02;
+let decreaseValue = Number(savedProgress.decreaseValue) || 50;
+let force = Number(savedProgress.force) || 8;
+let overclocked = Boolean(savedProgress.overclocked);
+let criticalChance = Number(savedProgress.criticalChance) || 0.02;
 
 //Click rate limit
 const MAX_CLICKS_PER_SECOND = 25;
@@ -13,14 +17,14 @@ const CLICK_WINDOW_MS = 1000;
 let recentClicks = [];
 
 // button levels
-let drainageLvl = 1;
-let forceLvl = 1;
-let criticalLvl = 1;
+let drainageLvl = Number(savedProgress.drainageLvl) || 1;
+let forceLvl = Number(savedProgress.forceLvl) || 1;
+let criticalLvl = Number(savedProgress.criticalLvl) || 1;
 
 // upgrade costs
-let drainageCost = 20;
-let forceCost = 100;
-let criticalCost = 300;
+let drainageCost = Number(savedProgress.drainageCost) || 20;
+let forceCost = Number(savedProgress.forceCost) || 100;
+let criticalCost = Number(savedProgress.criticalCost) || 300;
 
 //overclock
 let overclockMultiplier = 2;
@@ -31,8 +35,53 @@ const button = document.querySelector('.btn');
 const progressBar = document.querySelectorAll(".streakBar");
 const lastBar = progressBar[progressBar.length - 1]; 
 const upgradeBtn = document.getElementById('streakUp');
-const strength = parseFloat(document.getElementById('str').dataset.strength);
+let strength = Number(savedProgress.strength) || parseFloat(document.getElementById('str').dataset.strength) || 1;
 upgradeBtn.disabled = true;
+
+progressBar.forEach((bar, index) => {
+    const savedValue = Number(savedProgress.progressValues?.[index]);
+    if (Number.isFinite(savedValue)) bar.value = Math.min(savedValue, Number(bar.max));
+});
+if (lastBar && lastBar.value >= lastBar.max) upgradeBtn.disabled = false;
+
+function progressSnapshot() {
+    return {
+        clicks,
+        streak,
+        streakLevel,
+        strength,
+        decreaseValue,
+        force,
+        criticalChance,
+        overclocked,
+        drainageLvl,
+        forceLvl,
+        criticalLvl,
+        drainageCost,
+        forceCost,
+        criticalCost,
+        timeFreezeUnlocked,
+        timeFreezeDuration,
+        timeFreezeUpgradeCost,
+        progressValues: Array.from(progressBar, bar => Number(bar.value))
+    };
+}
+
+let saveInProgress = false;
+async function saveProgress() {
+    if (!isAuthenticated || saveInProgress) return;
+    saveInProgress = true;
+    try {
+        await fetch('/api/progress', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(progressSnapshot()),
+            keepalive: true
+        });
+    } finally {
+        saveInProgress = false;
+    }
+}
 
 function chance() {
     return Math.random() < (criticalChance);
@@ -133,6 +182,18 @@ setInterval(() => {
     ).length;
 }, 50);
 
+setInterval(saveProgress, 2000);
+window.addEventListener('beforeunload', saveProgress);
+
+upgradeBtn.addEventListener('click', async () => {
+    if (upgradeBtn.disabled) return;
+    streakLevel++;
+    strength++;
+    streak = 1;
+    await saveProgress();
+    window.location.reload();
+});
+
 //upgrade drain level
 document.getElementById("drainage").addEventListener('click', () => {
     if (clicks >= drainageCost) {
@@ -165,10 +226,11 @@ document.getElementById("critical").addEventListener('click', () => {
 
 // Time Freeze Upgrade
 let timeFreezeUnlocked = false;
-let timeFreezeDuration = 2;
+timeFreezeUnlocked = Boolean(savedProgress.timeFreezeUnlocked);
+let timeFreezeDuration = Number(savedProgress.timeFreezeDuration) || 2;
 let timeFreezeMaxDuration = 69696969696969696969696969;
 let timeFreezeCost = 500;
-let timeFreezeUpgradeCost = 1000;
+let timeFreezeUpgradeCost = Number(savedProgress.timeFreezeUpgradeCost) || 1000;
 let timeFreezeUpgradeCostExp = 1.2
 let timeFreezeActive = false;
 let timeFreezeCooldown = false;

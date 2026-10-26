@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log in | Click-a-Streak</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="site-main">
+    <section class="content">
+      <h1>Log in</h1>
+      <% if (message) { %><p><%= message %></p><% } %>
+      <% if (error) { %><p role="alert"><%= error %></p><% } %>
+      <form method="POST" action="/login">
+        <label>Email <input type="email" name="login" value="<%= login || '' %>" required autocomplete="email" /></label>
+        <label>Password <input type="password" name="password" required autocomplete="current-password" /></label>
+        <button class="up" type="submit">Log in</button>
+      </form>
+      <p><a href="/forgot-password">Forgot password?</a></p>
+      <p>Need an account? <a href="/register">Create one</a>.</p>
+    </section>
+  </main>
+</body>
+</html>
